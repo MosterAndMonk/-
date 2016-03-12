@@ -1,0 +1,170 @@
+#include <iostream>
+#include <cstdio>
+#include <cstring>
+#include <bitset>
+
+using namespace std;
+
+const int nnn = 9, nns = 9 + 2, INF = 1 << 30, max_n = 362880 + 2;
+int factor[nns];
+int iini[nns], igoal[nns];
+int ini, goal;
+
+bitset<max_n> putIn;
+int myQueue[max_n], queH, queT;
+int dx[]= {0, 1, 0, -1};
+int dy[] = {-1, 0, 1, 0};
+int fa[max_n];
+int ans;
+
+int perToint(int *pp)
+{
+    int nn = 0;
+    int sign[nns];
+    memset(sign, 0, sizeof(sign));
+    for(int i = 0; i < nnn; i++)
+    {
+        sign[pp[i]] = 1;
+        int ccount = 0;
+        for(int j = 0; j < pp[i]+1; j++)
+        {
+            if(!sign[j])
+            {
+                ccount++;
+            }
+        }
+        nn += ccount * factor[nnn-(i+1)];
+    }
+    return nn;
+}
+
+void intToper(int nn, int* pp)
+{
+    int sign[nns];
+    memset(sign, 0, sizeof(sign));
+    for(int i = 0; i < nnn;)
+    {
+        for(int j = nnn-1; j >= 0; j--)
+        {
+            int temp = j*factor[nnn-(i+1)];
+            if(nn >= temp)
+            {
+                int k = 0;
+                while(j+1 > 0)
+                {
+                    if(!sign[k++])
+                        j--;
+                }
+                nn -= temp;
+                sign[k-1] = 1;
+                pp[i++] = k-1;
+            }
+        }
+    }
+}
+
+void bfs(int status)
+{
+    putIn.reset();
+    queH = queT = 0;
+    ans = -1;
+
+    myQueue[queT++] = status;
+    putIn.set(status, true);
+    while(queH != queT)
+    {
+        status = myQueue[queH++];
+        if(status == goal)
+        {
+            int cc = 0;
+            for(int i = status; i != ini; i = fa[i])
+            {
+                cc ++;
+            }
+            ans = cc;
+            return;
+        }
+        int ppp[nns], pp[nns];
+        intToper(status,ppp);
+        int x, y;
+        for(int i = 0; i < nnn; i++)
+        {
+            if(ppp[i] == 0)
+            {
+                x = i / 3;
+                y = i % 3;
+                break;
+            }
+        }
+        for(int i = 0; i < 4; i++)
+        {
+            for(int j = 0; j < nnn; j++)
+                pp[j] = ppp[j];
+            int xx = x + dx[i];
+            int yy = y + dy[i];
+            if(0 <= xx && xx < 3 && 0 <= yy && yy < 3)
+            {
+                int xy = 3 * x + y;
+                int xxyy = 3 * xx + yy;
+                pp[xy] = pp[xxyy];
+                pp[xxyy] = 0;
+                int newStatus = perToint(pp);
+                if(!putIn[newStatus])
+                {
+                    myQueue[queT++] = newStatus;
+                    fa[newStatus] = status;
+                    putIn.set(newStatus, true);
+                }
+            }
+        }
+    }
+}
+
+void init()
+{
+    factor[0] = 1;
+    for(int i = 1; i <= nnn; i++)
+        factor[i] = i * factor[i-1];
+    char sini[nns], sgoal[nns];
+    scanf("%s%s", sini, sgoal);
+    for(int i = 0; i < nnn; i++)
+    {
+        if(sini[i] == '.')
+        {
+            iini[i] = 0;
+        }
+        else if('0' <= sini[i] && sini[i] <= '9')
+        {
+            iini[i] = sini[i] - '0';
+        }
+        if(sgoal[i] == '.')
+        {
+            igoal[i] = 0;
+        }
+        else if('0' <= sgoal[i] && sgoal[i] <= '9')
+        {
+            igoal[i] = sgoal[i] - '0';
+        }
+    }
+
+    ini = perToint(iini);
+    goal = perToint(igoal);
+    //int pp[nns];
+    //intToper(goal, pp);
+    /*
+    for(int i = 0; i < nnn; i++)
+    {
+        printf("%d", pp[i]);
+    }
+    printf("\n");
+    //printf("%d\n", goal);
+    */
+}
+
+int main()
+{
+    init();
+    bfs(ini);
+    printf("%d\n", ans);
+    return 0;
+}
